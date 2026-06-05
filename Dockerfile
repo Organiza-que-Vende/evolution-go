@@ -10,6 +10,14 @@ COPY go.mod go.sum ./
 # Copiar whatsmeow-lib que é uma dependência local
 COPY whatsmeow-lib/ ./whatsmeow-lib/
 
+# Fallback para ambientes como Easypanel (que baixam o zip do repositório sem submódulos)
+RUN if [ ! -f "./whatsmeow-lib/go.mod" ]; then \
+      rm -rf ./whatsmeow-lib && \
+      git clone https://github.com/EvolutionAPI/whatsmeow.git ./whatsmeow-lib && \
+      cd ./whatsmeow-lib && \
+      git checkout 0923702fb3fac8525241f15331b92116485d69eb; \
+    fi
+
 # Agora fazer download das dependências (com replace funcionando)
 RUN go mod download
 
