@@ -367,6 +367,10 @@ func (w whatsmeowService) StartClient(cd *ClientData) {
 		if err == nil {
 			store.DeviceProps.Version.Tertiary = proto.Uint32(uint32(version.Patch))
 		}
+		// FIX 405 "Client outdated": o handshake de conexao usa a waVersion GLOBAL do
+		// store (clientpayload.go), nao o DeviceProps.Version. Sem sincronizar as duas,
+		// o WhatsApp recusa com "Client outdated". Atualiza a global tambem.
+		store.SetWAVersion(store.WAVersionContainer{uint32(version.Major), uint32(version.Minor), uint32(version.Patch)})
 	} else {
 		// Try to fetch version from WhatsApp Web
 		webVersion, err := fetchWhatsAppWebVersion()
@@ -378,6 +382,9 @@ func (w whatsmeowService) StartClient(cd *ClientData) {
 			store.DeviceProps.Version.Primary = proto.Uint32(uint32(version.Major))
 			store.DeviceProps.Version.Secondary = proto.Uint32(uint32(version.Minor))
 			store.DeviceProps.Version.Tertiary = proto.Uint32(uint32(version.Patch))
+			// FIX 405 "Client outdated": sincroniza a waVersion GLOBAL (usada no handshake)
+			// com a versao buscada da web; sem isso o handshake usa a versao velha compilada.
+			store.SetWAVersion(store.WAVersionContainer{uint32(version.Major), uint32(version.Minor), uint32(version.Patch)})
 		}
 	}
 
