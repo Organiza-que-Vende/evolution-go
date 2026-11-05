@@ -1,4 +1,4 @@
-FROM golang:1.25.0-alpine AS build
+FROM golang:1.26-alpine AS build
 
 RUN apk update && apk add --no-cache git build-base libjpeg-turbo-dev libwebp-dev
 
@@ -11,11 +11,12 @@ COPY go.mod go.sum ./
 COPY whatsmeow-lib/ ./whatsmeow-lib/
 
 # Fallback para ambientes como Easypanel (que baixam o zip do repositório sem submódulos)
+# Aponta para o whatsmeow oficial (tulir) com proto compativel com o WhatsApp atual — corrige "Client outdated (405)".
 RUN if [ ! -f "./whatsmeow-lib/go.mod" ]; then \
       rm -rf ./whatsmeow-lib && \
-      git clone https://github.com/EvolutionAPI/whatsmeow.git ./whatsmeow-lib && \
+      git clone https://github.com/tulir/whatsmeow.git ./whatsmeow-lib && \
       cd ./whatsmeow-lib && \
-      git checkout 0923702fb3fac8525241f15331b92116485d69eb; \
+      git checkout 54038813c47f3f351eb6fcaafab0e1b99d676850; \
     fi
 
 # Agora fazer download das dependências (com replace funcionando)
