@@ -10,13 +10,21 @@ COPY go.mod go.sum ./
 # Copiar whatsmeow-lib que é uma dependência local
 COPY whatsmeow-lib/ ./whatsmeow-lib/
 
-# Fallback para ambientes como Easypanel (que baixam o zip do repositório sem submódulos)
-# Aponta para o whatsmeow oficial (tulir) com proto compativel com o WhatsApp atual — corrige "Client outdated (405)".
+# Fallback para ambientes como Easypanel (que baixam o zip do repositório sem submódulos).
+# Clona SEMPRE o main mais recente do whatsmeow oficial (tulir) para que cada
+# redeploy traga o proto novo e o "Client outdated (405)" se resolva sozinho,
+# sem precisar atualizar um SHA a mao. Trade-off: build nao-determinístico — se
+# o tulir publicar uma mudança de API, o build do deploy pode quebrar; o EasyPanel
+# mantem a imagem anterior no ar nesse caso (nao fica sem serviço). O proximo
+# redeploy apos corrigir a API volta a pegar o main novo.
+# Para TRAVAR numa versao conhecida (build determinístico), troque "main" por um
+# SHA: git checkout <sha>.
+ARG WHATSMEOW_REF=main
 RUN if [ ! -f "./whatsmeow-lib/go.mod" ]; then \
       rm -rf ./whatsmeow-lib && \
       git clone https://github.com/tulir/whatsmeow.git ./whatsmeow-lib && \
       cd ./whatsmeow-lib && \
-      git checkout 54038813c47f3f351eb6fcaafab0e1b99d676850; \
+      git checkout "${WHATSMEOW_REF}"; \
     fi
 
 # Agora fazer download das dependências (com replace funcionando)
